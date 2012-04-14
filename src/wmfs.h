@@ -38,7 +38,6 @@ enum barpos
 {
      BarTop = 0,
      BarBottom,
-     BarHide,
      BarLast
 };
 
@@ -154,6 +153,7 @@ struct infobar
      enum barpos pos;
      char *elemorder;
      char *name;
+     bool hidden;
      TAILQ_HEAD(esub, element) elements;
      SLIST_ENTRY(infobar) next;
 };

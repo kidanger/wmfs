@@ -153,6 +153,7 @@ config_bars(void)
      int screenid;
      char *name, *elem;
      enum barpos pos = BarTop;
+     bool hidden;
 
      /* [bars] */
      sec = fetch_section_first(NULL, "bars");
@@ -167,10 +168,11 @@ config_bars(void)
           screenid = fetch_opt_first(ks[i], "-1", "screen").num;
           t = name_to_theme(fetch_opt_first(ks[i], "default", "theme").str);
           pos = fetch_opt_first(ks[i], "0", "position").num;
+          hidden = fetch_opt_first(ks[i], "false", "hidden").boolean;
 
           SLIST_FOREACH(s, &W->h.screen, next)
                if(screenid == s->id || screenid == -1)
-                    infobar_new(s, name, t, pos, elem);
+                    infobar_new(s, name, t, pos, elem, hidden);
      }
 
      free(ks);

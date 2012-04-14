@@ -433,7 +433,7 @@ infobar_elem_reinit(struct infobar *i)
 }
 
 struct infobar*
-infobar_new(struct screen *s, char *name, struct theme *theme, enum barpos pos, const char *elem)
+infobar_new(struct screen *s, char *name, struct theme *theme, enum barpos pos, const char *elem, bool hidden)
 {
      bool map;
      struct infobar *i = (struct infobar*)xcalloc(1, sizeof(struct infobar));
@@ -442,6 +442,7 @@ infobar_new(struct screen *s, char *name, struct theme *theme, enum barpos pos, 
      i->theme = theme;
      i->elemorder = xstrdup(elem);
      i->name = xstrdup(name);
+     i->hidden = hidden;
 
      map = infobar_placement(i, pos);
 
@@ -515,8 +516,97 @@ infobar_free(struct screen *s)
      }
 }
 
+static void
+_infobar_toggle_hide(struct infobar *i)
+{
+     i->hidden = !i->hidden;
 
+     if (i->hidden)
+     {
+          /* Restore screen sizes */
+          if(i->pos == BarTop)
+          {
+               i->screen->ugeo.y -= i->geo.h;
+               i->screen->ugeo.h += i->geo.h;
+               i->geo.y = - i->geo.h;
+          }
+          if(i->pos == BarBottom)
+          {
+               i->screen->ugeo.h += i->geo.h;
+          }
 
+          /* Unmap the bar */
+          barwin_unmap(i->bar);
+          barwin_unmap_subwin(i->bar);
+          return;
+     }
 
+     /* Move and show */
+     infobar_placement(i, i->pos);
 
+     barwin_move(i->bar, i->geo.x, i->geo.y);
+     barwin_map(i->bar);
+     barwin_map_subwin(i->bar);
+     barwin_refresh_color(i->bar);
+     infobar_refresh(i);
+}
+
+void
+uicb_infobar_hide(Uicb cmd)
+{
+     struct infobar *i;
+     struct screen *s;
+     struct client *c;
+
+     /* Hide them all! */
+     if(!cmd)
+     {
+          SLIST_FOREACH(s, &W->h.screen, next)
+               SLIST_FOREACH(i, &s->infobars, next)
+                    _infobar_toggle_hide(i);
+     }
+     /* Specific bars */
+     else
+     {
+          char * const p = xstrdup(cmd);
+          char *tmp;
+          int index = 0;
+          while(*p != '\0')
+          {
+               tmp = strchr(p + index, ' ');
+               if(tmp)
+                    *tmp = '\0';
+
+               i = infobar_gb_name(p + index);
+               _infobar_toggle_hide(i);
+
+               if(!tmp)
+                    break;
+
+               index = tmp - p;
+          }
+          free(p);
+
+     }
+
+     /* Some bars have been hidden, replace other bars */
+     SLIST_FOREACH(s, &W->h.screen, next)
+     {
+          /* Reset screen dimensions */
+          s->ugeo = s->geo;
+
+          /* Redraw every bars at the right position */
+          SLIST_FOREACH(i, &s->infobars, next)
+          {
+               if(i->hidden)
+                    continue;
+               infobar_placement(i, i->pos);
+               barwin_move(i->bar, i->geo.x, i->geo.y);
+          }
+     }
+
+     /* Resize clients */
+     SLIST_FOREACH(c, &W->h.client, next)
+          layout_fix_hole(c);
+}
 

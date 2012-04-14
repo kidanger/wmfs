@@ -102,6 +102,9 @@ static const struct { char *name; void (*func)(Uicb cmd); } uicb_list[] =
      /* Launcher */
      { "launcher", uicb_launcher },
 
+					/* Infobar */
+     { "infobar_hide", uicb_infobar_hide },
+
      { NULL, NULL }
 };
 

@@ -12,12 +12,14 @@
 
 enum { ElemTag = 0, ElemStatus, ElemSystray, ElemLauncher, ElemCustom, ElemLast };
 
-struct infobar *infobar_new(struct screen *s, char *name, struct theme *theme, enum barpos pos, const char *elem);
+struct infobar *infobar_new(struct screen *s, char *name, struct theme *theme, enum barpos pos, const char *elem, bool hidden);
 void infobar_elem_update(struct infobar *i, int type);
 void infobar_refresh(struct infobar *i);
 void infobar_remove(struct infobar *i);
 void infobar_free(struct screen *s);
 void infobar_elem_reinit(struct infobar *i);
+
+void uicb_infobar_hide(Uicb);
 
 /* Basic placement of elements */
 static inline void
@@ -44,6 +46,9 @@ infobar_placement(struct infobar *i, enum barpos p)
      i->geo = i->screen->ugeo;
      i->geo.h = i->theme->bars_width;
 
+     if (i->hidden)
+          return false;
+
      switch(p)
      {
           case BarTop:
@@ -55,7 +60,6 @@ infobar_placement(struct infobar *i, enum barpos p)
                i->screen->ugeo.h -= i->geo.h;
                break;
           default:
-          case BarHide:
                return false;
      }
 
@@ -85,6 +89,7 @@ infobar_gb_name(const char *name)
                     return i;
      }
 
+     s = SLIST_FIRST(&W->h.screen);
      return SLIST_FIRST(&s->infobars);
 }
 
