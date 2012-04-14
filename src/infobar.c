@@ -528,7 +528,6 @@ _infobar_toggle_hide(struct infobar *i)
           {
                i->screen->ugeo.y -= i->geo.h;
                i->screen->ugeo.h += i->geo.h;
-               i->geo.y = - i->geo.h;
           }
           if(i->pos == BarBottom)
           {
@@ -578,7 +577,8 @@ uicb_infobar_hide(Uicb cmd)
                     *tmp = '\0';
 
                i = infobar_gb_name(p + index);
-               _infobar_toggle_hide(i);
+               if(i)
+                    _infobar_toggle_hide(i);
 
                if(!tmp)
                     break;
@@ -586,7 +586,6 @@ uicb_infobar_hide(Uicb cmd)
                index = tmp - p;
           }
           free(p);
-
      }
 
      /* Some bars have been hidden, replace other bars */
