@@ -607,6 +607,7 @@ uicb_infobar_hide(Uicb cmd)
 
      /* Resize clients */
      SLIST_FOREACH(c, &W->h.client, next)
-          layout_fix_hole(c);
+          if (!(c->flags & CLIENT_FREE))
+               layout_fix_hole(c);
 }
 
